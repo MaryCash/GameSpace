@@ -1,0 +1,259 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+/* Project War Game
+ * Mary Cash 1496093
+ * June 5th 2015 */
+
+namespace CardGame
+{
+
+    enum FaceValue { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace }
+
+    enum Suit { Hearts, Diamonds, Clubs, Spades }
+
+    class Card
+    {
+        private Suit _mySuit;
+        private FaceValue _myFaceValue;
+
+        //default constructor
+        public Card()
+        {
+            /* The default card can be any card */
+
+            _mySuit = Suit.Hearts;
+            _myFaceValue = FaceValue.Two;
+        }
+
+        //regular constructor
+        public Card(Suit s, FaceValue v)
+        {
+            _mySuit = s;
+            _myFaceValue = v;
+        }
+
+        //Prints the card, example: Nine of Clubs
+        public override string ToString()
+        {
+            string result = string.Format("{0} of {1}", this._myFaceValue, this._mySuit);
+            return result;
+        }
+
+        public Suit GetSuit()
+        {
+            return _mySuit;
+        }
+
+        public FaceValue GetFaceValue()
+        {
+            return _myFaceValue;
+        }
+
+        //compare just on face values
+        //compare card one to card 2. Is going to return 0, -1, or 1
+        // # implements IComparaible.CompareTo
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+
+            Card secondCard = obj as Card;
+
+            if (secondCard != null)
+            {
+                return this._myFaceValue.CompareTo(secondCard._myFaceValue);
+            }
+            else
+            {
+                throw new ArgumentException("Object is not a Card");
+            }
+        }
+
+        //Equal is similar to CompareTo
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+
+            Card secondCard = obj as Card;
+
+            if (secondCard != null)
+            {
+                return this._myFaceValue.Equals(secondCard._myFaceValue);
+            }
+            else
+            {
+                throw new ArgumentException("Object is not a Card");
+            }
+
+        }
+
+        // GetHashCode is part to the IComparable interface
+        // Not used here, but provided to get a clean built.
+        public override int GetHashCode()
+        {
+            return ((int)this._myFaceValue);
+        }
+    }
+
+    class Deck
+    {
+        /* 
+         *  Implements all the functionality of the deck class
+         * 
+         */
+
+        private const int _CARDSINDECK = 52;
+        private List<Card> _theDeck = new List<Card>();
+        private Random _randomCardSelector = new Random();
+        private int _cardIndex;
+
+        public Deck()
+        {
+            _cardIndex = 0;
+
+            for (Suit s = Suit.Hearts; s <= Suit.Spades; s++)
+            {
+                for (FaceValue f = FaceValue.Two; f <= FaceValue.Ace; f++)
+                {
+                    this._theDeck.Add(new Card(s, f));
+                }
+            }
+        }
+
+        //Function returns the concatenation of all the cards in the deck
+        //usefull for debugging: to see if it was properly shuffled
+        public String Print()
+        {
+            String printString = "";
+            foreach (Card c in _theDeck)
+            {
+                printString += c.ToString();
+
+            }
+            return printString;
+        }
+
+        //Is the deck empty?
+        public bool EmptyDeck()
+        {
+            if (_cardIndex < _CARDSINDECK)
+            {
+                return false;           // Deck still has some cards 
+            }
+            else
+            {
+                return true;           // Deck is empty
+            }
+        }
+
+        // make sure you don't take the same card
+        // Pre-condition: The deck is not empty.
+        // Check if the deck is not empty before calling this function
+        public Card DealACard()
+        {
+            return _theDeck[_cardIndex++];
+        }
+
+
+        // shuffle the Deck
+        public void Shuffle()
+        {
+            /* Shuffle the deck */
+            int rNumber;
+            for (int c = 0; c < _CARDSINDECK; c++)
+            {
+                rNumber = _randomCardSelector.Next(_CARDSINDECK);
+                Card tmp = _theDeck[c];
+                _theDeck[c] = _theDeck[rNumber];
+                _theDeck[rNumber] = tmp;
+
+            }
+        }
+
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Card card1;
+            Card card2;
+            Deck aDeck = new Deck();                // Start with a new deck
+
+            const int POT = 2;                      // Holds the round and game winner
+
+            int player1Score = 0;
+            int player2Score = 0;
+            int warPot = 0;                         // Accumulates the war points
+            int count = 1;                          // Counts the number of rounds
+            string winner = "";                     // Holds this rounds winner
+
+            aDeck.Shuffle();                        // Shuffle the deck //Console.WriteLine(aDeck.Print());
+
+            while (!aDeck.EmptyDeck())              // Deal the next 2 cards as long as deck is not empty
+            {
+                card1 = aDeck.DealACard();
+                card2 = aDeck.DealACard();
+
+                if (card1.CompareTo(card2) == 0)           // ==> cards are equal
+                {
+                    warPot += POT;
+                    winner = "It's a TIE";
+                }
+                else if (card1.CompareTo(card2) == 1)       // ==> card1 > card2 
+                {
+                    player1Score += POT + warPot;            // Player 1 wins this round
+                    winner = "Player One";
+                    warPot = 0;
+                }
+                else
+                {
+                    player2Score += POT + warPot;            // Player 2 wins this round
+                    winner = "Player Two";
+                    warPot = 0;
+                }
+
+                // Display round results
+                Console.WriteLine("Round " + count++);
+                Console.WriteLine("Player One's Card : " + card1.GetFaceValue() + " of " + card1.GetSuit());
+                Console.WriteLine("Player Two's Card : " + card2.GetFaceValue() + " of " + card2.GetSuit());
+                Console.WriteLine("        Winner is : " + winner);
+                Console.WriteLine("    Current Score : ");
+                Console.WriteLine("       Player One : " + player1Score);
+                Console.WriteLine("       Player Two : " + player2Score);
+
+                Console.WriteLine("Press enter to continue . . .");
+                Console.ReadLine();
+
+            } // End of While
+
+            if (warPot > 0)                         // Divide the war points evenly if the last round(s) were tied
+            {
+                player1Score += warPot / 2;
+                player2Score += warPot / 2;
+            }
+
+            if (player1Score > player2Score)        // Set up display for the winner(s)
+            {
+                winner = "Player One";
+            }
+            else if (player2Score > player1Score)
+            {
+                winner = "Player Two ";
+            }
+            else
+            {
+                winner = "Player One and Player Two in a TIE";
+            }
+
+            Console.WriteLine("******************* Game Over ******************************");
+            Console.WriteLine("     *    The Game was won by " + winner + "      *");
+            Console.WriteLine("     *    Player One : " + player1Score + " Player Two : " + player2Score + " * ");
+            Console.WriteLine("************************************************************");
+
+            Console.ReadKey();
+        }
+    }
+}
